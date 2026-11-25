@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ArabKit | Clean and normalize Arabic text in one click</title>
+<meta name="description" content="Strip diacritics and tatweel, normalize alef and yaa, convert Arabic/Indian/Western digits, fix invisible RTL marks, remove duplicate lines. Offline Arabic text toolkit.">
+<meta property="og:title" content="ArabKit">
+<meta property="og:description" content="One-click Arabic text cleanup: diacritics, alef/yaa, digits, bidi marks, duplicates. Runs in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ff5a1f'/%3E%3Ctext x='50' y='74' font-size='70' text-anchor='middle' fill='%23111' font-weight='900'%3Eع%3C/text%3E%3C/svg%3E">
+<style>
+:root{--o:#ff5a1f;--k:#111;--w:#fff;--g:#f1f1ec}
+*{box-sizing:border-box}
+body{margin:0;background:var(--g);color:var(--k);font:17px/1.45 "Helvetica Neue",Arial,"Noto Sans Arabic",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:22px 16px 50px}
+header{background:var(--o);border:4px solid var(--k);box-shadow:8px 8px 0 var(--k);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+h1{margin:0;font-size:46px;font-weight:900;letter-spacing:-2px;text-transform:uppercase}
+header p{margin:0;font-weight:700;max-width:420px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.pane{border:4px solid var(--k);background:var(--w);box-shadow:6px 6px 0 var(--k)}
+.pane h2{margin:0;padding:8px 14px;background:var(--k);color:var(--w);font-size:14px;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.pane h2 button{background:var(--o);color:var(--k);border:0;font:800 12px Arial;padding:4px 10px;cursor:pointer;text-transform:uppercase}
+textarea{width:100%;height:280px;border:0;padding:14px;font:22px/1.7 "Noto Naskh Arabic","Amiri",serif;resize:vertical;outline:0;background:transparent}
+.stats{display:flex;gap:16px;flex-wrap:wrap;padding:8px 14px;border-top:3px solid var(--k);font:700 13px ui-monospace,monospace;background:var(--g)}
+.opts{margin-top:26px;border:4px solid var(--k);background:var(--w);box-shadow:6px 6px 0 var(--k);padding:16px}
+.opts h3{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:2px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:3px solid var(--k);padding:8px 12px;cursor:pointer;font-weight:700;font-size:15px;user-select:none;background:var(--w)}
+.chip.on{background:var(--o)}
+.chip small{display:block;font-weight:500;font-size:12px;opacity:.75}
+.presets{margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-weight:700;font-size:13px;text-transform:uppercase}
+.presets button{background:var(--k);color:var(--w);border:0;padding:7px 12px;cursor:pointer;font:700 13px Arial;text-transform:uppercase}
+footer{margin-top:26px;font-size:13px;font-weight:700}
+footer a{color:var(--k)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>ArabKit</h1><p>Clean, normalize and fix Arabic text. Paste, tick, copy. 100% offline. <span dir="rtl">نضّف النص العربي بضغطة.</span></p></header>
+<div class="grid">
+<div class="pane"><h2>Input / المدخل <button id="sample">Sample</button></h2><textarea id="in" dir="auto" placeholder="الصق النص هنا..."></textarea><div class="stats" id="s1"></div></div>
+<div class="pane"><h2>Output / الناتج <button id="copy">Copy</button></h2><textarea id="out" dir="auto" readonly></textarea><div class="stats" id="s2"></div></div>
+</div>
+<div class="opts"><h3>Operations</h3><div class="chips" id="chips"></div>
+<div class="presets">Presets: <button data-p="search">Search-ready</button><button data-p="clean">Clean paste</button><button data-p="none">Reset</button></div></div>
+<footer>Nothing is uploaded. · <a href="https://github.com/mostaaafaomran-ctrl/arabkit">GitHub</a></footer>
+</div>
+<script src="core.js"></script>
+<script>
+var L={bidi:['Remove hidden RTL/LTR marks','علامات الاتجاه المخفية'],diacritics:['Strip diacritics','شيل التشكيل'],tatweel:['Remove tatweel ـ','شيل الكشيدة'],alef:['أ إ آ → ا','توحيد الألف'],yaa:['ى → ي','توحيد الياء'],taa:['ة → ه','التاء المربوطة'],persian:['Persian ک ی → ك ي','حروف فارسية'],toWestern:['Digits → 0-9','الأرقام لإنجليزي'],toArabicIndic:['Digits → ٠-٩','الأرقام لعربي'],punct:[', ; ? → ، ؛ ؟','علامات الترقيم'],spaces:['Fix spaces & blank lines','المسافات والسطور الفاضية'],dedupeLines:['Remove duplicate lines','شيل السطور المكررة']};
+var on={diacritics:1,tatweel:1,bidi:1,spaces:1};
+var $=function(i){return document.getElementById(i)};
+function st(t){var s=ArabKit.stats(t);return '<span>'+s.chars+' chars</span><span>'+s.words+' words</span><span>'+s.lines+' lines</span><span>'+s.diacritics+' diacritics</span>'}
+function run(){var t=$('in').value,o=ArabKit.apply(t,on);$('out').value=o;$('s1').innerHTML=st(t);$('s2').innerHTML=st(o)}
+function chips(){$('chips').innerHTML='';ArabKit.ORDER.forEach(function(k){var d=document.createElement('div');d.className='chip'+(on[k]?' on':'');d.innerHTML=L[k][0]+'<small dir="rtl">'+L[k][1]+'</small>';d.onclick=function(){on[k]=!on[k];if(k==='toWestern'&&on[k])on.toArabicIndic=0;if(k==='toArabicIndic'&&on[k])on.toWestern=0;chips();run()};$('chips').appendChild(d)})}
+document.querySelectorAll('.presets button').forEach(function(b){b.onclick=function(){var p=b.dataset.p;on=p==='search'?{diacritics:1,tatweel:1,alef:1,yaa:1,taa:1,persian:1,bidi:1,toWestern:1,spaces:1}:p==='clean'?{diacritics:0,tatweel:1,bidi:1,persian:1,punct:1,spaces:1,dedupeLines:0}:{};chips();run()}});
+$('sample').onclick=function(){$('in').value='أَهْلًا بِكُمْ فِي مَوْقِعِنَا\u200F  \nالسعرُ ١٥٠ جنيهـــاً مصريـــاً، شكراً\u200F\nالسعرُ ١٥٠ جنيهـــاً مصريـــاً، شكراً\nمدرسة   ومستشفى   وإسلام';run()};
+$('copy').onclick=function(){navigator.clipboard.writeText($('out').value);var b=this;b.textContent='Copied!';setTimeout(function(){b.textContent='Copy'},1200)};
+$('in').addEventListener('input',run);
+$('in').value='أَهْلًا بِكُمْ فِي مَوْقِعِنَا\u200F  \nالسعرُ ١٥٠ جنيهـــاً مصريـــاً، شكراً\u200F\nالسعرُ ١٥٠ جنيهـــاً مصريـــاً، شكراً\nمدرسة   ومستشفى   وإسلام';
+on={diacritics:1,tatweel:1,bidi:1,spaces:1,dedupeLines:1};
+chips();run();
+</script>
+</body>
+</html>
